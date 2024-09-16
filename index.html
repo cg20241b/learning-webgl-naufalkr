@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGL Letters Animation</title>
+    <title>WebGL Graphics App</title>
     <style>
         body, html {
             margin: 0;
@@ -18,6 +18,7 @@
         canvas {
             width: 80%;
             height: 80%;
+            border: 1px solid #fff;
         }
     </style>
 </head>
@@ -26,7 +27,7 @@
     <script>
         // Initialize WebGL context
         const canvas = document.getElementById('glCanvas');
-        let gl = canvas.getContext('webgl');
+        const gl = canvas.getContext('webgl');
 
         if (!gl) {
             console.error('WebGL not supported, falling back on experimental-webgl');
@@ -37,189 +38,10 @@
             alert('Your browser does not support WebGL');
         }
 
-        let useLines = true;
-
-        // Vertex shader program
-        const vsSource = `
-            attribute vec4 aVertexPosition;
-            void main(void) {
-                gl_Position = aVertexPosition;
-            }
-        `;
-
-        // Fragment shader programs
-        const fsSourceLines = `
-            void main(void) {
-                gl_FragColor = vec4(0.0, 0.63, 0.61, 1.0); // Blue color for lines
-            }
-        `;
-
-        const fsSourceTriangles = `
-            uniform bool isBox;
-            void main(void) {
-                if (isBox) {
-                    gl_FragColor = vec4(0.0, 0.63, 0.61, 1.0); // Background color for box
-                } else {
-                    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // Yellow color for letters
-                }
-            }
-        `;
-
-        // Initialize shader programs
-        const shaderProgramLines = initShaderProgram(gl, vsSource, fsSourceLines);
-        const shaderProgramTriangles = initShaderProgram(gl, vsSource, fsSourceTriangles);
-
-        // Buffers for CHA letters and box
-        const buffers = initBuffers(gl);
-
-        // Function to switch between LINES and TRIANGLES every 3 seconds
-        function toggleDrawMethod() {
-            useLines = !useLines;
-            drawScene(gl, useLines ? shaderProgramLines : shaderProgramTriangles, buffers);
-            setTimeout(toggleDrawMethod, 3000);
-        }
-
-        // Start animation
-        toggleDrawMethod();
-
-        // Initialize the buffers for the letters "CHA" and box
-        function initBuffers(gl) {
-            const positionBufferLines = gl.createBuffer();
-            const positionBufferTriangles = gl.createBuffer();
-            const boxBuffer = gl.createBuffer();
-
-            // Create buffer for box (500x300 px, scaled to WebGL coordinates)
-            gl.bindBuffer(gl.ARRAY_BUFFER, boxBuffer);
-            const boxPositions = [
-                -1,  1,
-                 1,  1,
-                -1, -1,
-                 1, -1,
-            ];
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(boxPositions), gl.STATIC_DRAW);
-
-            gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferLines);
-            const positionsLines = [
-                // N (using LINES)
-                -0.8, 0.5,  -0.8, -0.5,
-                -0.8, 0.5,  -0.6, -0.5,
-                -0.6, -0.5, -0.6, 0.5,
-
-                // A
-                -0.3, 0.5,   -0.5, -0.5,
-                -0.3, 0.5,   -0.1, -0.5,
-                -0.4, -0.0,  -0.2, -0.0,
-
-                // U
-                0.0, 0.5,  0.0, -0.5,
-                0.2, 0.5,  0.2, -0.5,
-                0.0, -0.5, 0.2, -0.5
-            ];
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positionsLines), gl.STATIC_DRAW);
-
-            gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferTriangles);
-            const positionsTriangles = [
-                // N
-                -0.8, 0.5,  -0.75, 0.5,  -0.75, -0.5,
-                -0.75, -0.5, -0.8, -0.5, -0.8, 0.5,
-
-                -0.6, 0.5,  -0.55, 0.5,  -0.55, -0.5,
-                -0.55, -0.5, -0.6, -0.5, -0.6, 0.5,
-
-                -0.8, 0.5,  -0.75, 0.5,  -0.6, -0.5,  
-                -0.75, 0.5,  -0.55, -0.5,  -0.6, -0.5,
-
-                // A
-                -0.45,  -0.5,   -0.25,  0.5,   -0.5,  -0.5, 
-                -0.3,  0.5,   -0.25,  0.5,   -0.5,  -0.5,
-                
-                -0.3, 0.5,  -0.25, 0.5,  -0.1, -0.5,  
-                -0.25, 0.5,  -0.05, -0.5,  -0.1, -0.5,
-
-                -0.36,  0.05,   -0.16,  0.05,   -0.36,  -0.05,  // Middle horizontal bar
-                -0.36,  -0.05,   -0.16,  0.05,   -0.16,  -0.05,
-
-                // U
-                0.0, 0.5,  0.05, 0.5,  0.05, -0.5,
-                0.05, -0.5, 0.0, -0.5, 0.0, 0.5,
-
-                -0.0,  -0.4,   0.2,  -0.4,   0.0,  -0.5,  // Middle horizontal bar
-                -0.0,  -0.5,   0.2,  -0.4,   0.2,  -0.5,
-
-                0.2, 0.5,  0.25, 0.5,  0.25, -0.5,
-                0.25, -0.5, 0.2, -0.5, 0.2, 0.5,
-            ];
-
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positionsTriangles), gl.STATIC_DRAW);
-
-            return {
-                positionLines: positionBufferLines,
-                positionTriangles: positionBufferTriangles,
-                boxBuffer: boxBuffer,
-            };
-        }
-
-        // Draw the scene (either with LINES or TRIANGLES)
-        function drawScene(gl, shaderProgram, buffers) {
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            
-            // Draw the box background when in TRIANGLES mode
-            if (!useLines) {
-                gl.bindBuffer(gl.ARRAY_BUFFER, buffers.boxBuffer);
-                gl.vertexAttribPointer(
-                    gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-                    2, gl.FLOAT, false, 0, 0);
-                gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, 'aVertexPosition'));
-
-                gl.useProgram(shaderProgram);
-                gl.uniform1i(gl.getUniformLocation(shaderProgram, 'isBox'), true);
-                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-            }
-
-            // Draw letters
-            gl.bindBuffer(gl.ARRAY_BUFFER, useLines ? buffers.positionLines : buffers.positionTriangles);
-            gl.vertexAttribPointer(
-                gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-                2, gl.FLOAT, false, 0, 0);
-            gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, 'aVertexPosition'));
-
-            gl.useProgram(shaderProgram);
-            gl.uniform1i(gl.getUniformLocation(shaderProgram, 'isBox'), false);
-            gl.drawArrays(useLines ? gl.LINES : gl.TRIANGLES, 0, useLines ? 24 : 60);
-        }
-
-        // Initialize shader program
-        function initShaderProgram(gl, vsSource, fsSource) {
-            const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-            const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
-
-            const shaderProgram = gl.createProgram();
-            gl.attachShader(shaderProgram, vertexShader);
-            gl.attachShader(shaderProgram, fragmentShader);
-            gl.linkProgram(shaderProgram);
-
-            if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-                console.error('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
-                return null;
-            }
-
-            return shaderProgram;
-        }
-
-        // Create shader
-        function loadShader(gl, type, source) {
-            const shader = gl.createShader(type);
-            gl.shaderSource(shader, source);
-            gl.compileShader(shader);
-
-            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                console.error('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
-                gl.deleteShader(shader);
-                return null;
-            }
-
-            return shader;
-        }
+        // Set clear color to black, fully opaque
+        gl.clearColor(1.0, 1.0, 0.0, 1.0);
+        // Clear the color buffer with specified clear color
+        gl.clear(gl.COLOR_BUFFER_BIT);
     </script>
 </body>
 </html>
